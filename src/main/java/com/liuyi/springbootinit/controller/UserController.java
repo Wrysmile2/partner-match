@@ -189,7 +189,7 @@ public class UserController {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         User user = userService.getById(id);
-        ThrowUtils.throwIf(user == null, ErrorCode.NOT_FOUND_ERROR);
+        ThrowUtils.throwIf(user == null, ErrorCode.NO_AUTH);
         return ResultUtils.success(user);
     }
 

@@ -2,6 +2,7 @@ package com.liuyi.springbootinit.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.gson.Gson;
+import com.liuyi.springbootinit.constant.UserConstant;
 import com.liuyi.springbootinit.exception.BusinessException;
 import com.liuyi.springbootinit.exception.ThrowUtils;
 import com.liuyi.springbootinit.service.PostService;
@@ -93,10 +94,10 @@ public class PostController {
         long id = deleteRequest.getId();
         // 判断是否存在
         Post oldPost = postService.getById(id);
-        ThrowUtils.throwIf(oldPost == null, ErrorCode.NOT_FOUND_ERROR);
+        ThrowUtils.throwIf(oldPost == null, ErrorCode.NOT_LOGIN);
         // 仅本人或管理员可删除
         if (!oldPost.getUserId().equals(user.getId()) && !userService.isAdmin(request)) {
-            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+            throw new BusinessException(ErrorCode.NOT_LOGIN);
         }
         boolean b = postService.removeById(id);
         return ResultUtils.success(b);
@@ -125,7 +126,7 @@ public class PostController {
         long id = postUpdateRequest.getId();
         // 判断是否存在
         Post oldPost = postService.getById(id);
-        ThrowUtils.throwIf(oldPost == null, ErrorCode.NOT_FOUND_ERROR);
+        ThrowUtils.throwIf(oldPost == null, ErrorCode.NO_AUTH);
         boolean result = postService.updateById(post);
         return ResultUtils.success(result);
     }
@@ -143,7 +144,7 @@ public class PostController {
         }
         Post post = postService.getById(id);
         if (post == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+            throw new BusinessException(ErrorCode.NO_AUTH);
         }
         return ResultUtils.success(postService.getPostVO(post, request));
     }
@@ -234,10 +235,10 @@ public class PostController {
         long id = postEditRequest.getId();
         // 判断是否存在
         Post oldPost = postService.getById(id);
-        ThrowUtils.throwIf(oldPost == null, ErrorCode.NOT_FOUND_ERROR);
+        ThrowUtils.throwIf(oldPost == null, ErrorCode.NOT_LOGIN);
         // 仅本人或管理员可编辑
         if (!oldPost.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
-            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+            throw new BusinessException(ErrorCode.NOT_LOGIN);
         }
         boolean result = postService.updateById(post);
         return ResultUtils.success(result);
