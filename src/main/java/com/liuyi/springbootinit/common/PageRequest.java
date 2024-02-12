@@ -1,6 +1,5 @@
 package com.liuyi.springbootinit.common;
 
-import com.liuyi.springbootinit.constant.CommonConstant;
 import lombok.Data;
 
 /**

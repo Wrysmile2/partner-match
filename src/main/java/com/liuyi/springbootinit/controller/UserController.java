@@ -6,7 +6,6 @@ import com.liuyi.springbootinit.common.BaseResponse;
 import com.liuyi.springbootinit.common.DeleteRequest;
 import com.liuyi.springbootinit.common.ErrorCode;
 import com.liuyi.springbootinit.common.ResultUtils;
-import com.liuyi.springbootinit.config.WxOpenConfig;
 import com.liuyi.springbootinit.constant.UserConstant;
 import com.liuyi.springbootinit.exception.BusinessException;
 import com.liuyi.springbootinit.exception.ThrowUtils;
@@ -24,18 +23,15 @@ import com.liuyi.springbootinit.model.dto.user.UserUpdateRequest;
 import java.util.List;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+
 import lombok.extern.slf4j.Slf4j;
-import me.chanjar.weixin.common.bean.WxOAuth2UserInfo;
-import me.chanjar.weixin.common.bean.oauth2.WxOAuth2AccessToken;
-import me.chanjar.weixin.mp.api.WxMpService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -48,10 +44,8 @@ public class UserController {
 
     @Resource
     private UserService userService;
-
     @Resource
-    private WxOpenConfig wxOpenConfig;
-
+    private RedisTemplate<String, Object> redisTemplate;
     // region 登录相关
 
     /**
@@ -77,46 +71,19 @@ public class UserController {
 
     /**
      * 用户登录
-     *
-     * @param userLoginRequest
+     * @param loginRequest
      * @param request
      * @return
      */
     @PostMapping("/login")
-    public BaseResponse<LoginUserVO> userLogin(@RequestBody UserLoginRequest userLoginRequest, HttpServletRequest request) {
-        if (userLoginRequest == null) {
+    public BaseResponse<User> login(@RequestBody UserLoginRequest loginRequest, HttpServletRequest request) {
+        if (loginRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        String userAccount = userLoginRequest.getUserAccount();
-        String userPassword = userLoginRequest.getUserPassword();
-        if (StringUtils.isAnyBlank(userAccount, userPassword)) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
-        }
-        LoginUserVO loginUserVO = userService.userLogin(userAccount, userPassword, request);
-        return ResultUtils.success(loginUserVO);
-    }
-
-    /**
-     * 用户登录（微信开放平台）
-     */
-    @GetMapping("/login/wx_open")
-    public BaseResponse<LoginUserVO> userLoginByWxOpen(HttpServletRequest request, HttpServletResponse response,
-            @RequestParam("code") String code) {
-        WxOAuth2AccessToken accessToken;
-        try {
-            WxMpService wxService = wxOpenConfig.getWxMpService();
-            accessToken = wxService.getOAuth2Service().getAccessToken(code);
-            WxOAuth2UserInfo userInfo = wxService.getOAuth2Service().getUserInfo(accessToken, code);
-            String unionId = userInfo.getUnionId();
-            String mpOpenId = userInfo.getOpenid();
-            if (StringUtils.isAnyBlank(unionId, mpOpenId)) {
-                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "登录失败，系统错误");
-            }
-            return ResultUtils.success(userService.userLoginByMpOpen(userInfo, request));
-        } catch (Exception e) {
-            log.error("userLoginByWxOpen error", e);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "登录失败，系统错误");
-        }
+        String userAccount = loginRequest.getUserAccount();
+        String userPassword = loginRequest.getUserPassword();
+        User user = userService.userLogin(userAccount, userPassword, request);
+        return ResultUtils.success(user,"登录成功");
     }
 
     /**

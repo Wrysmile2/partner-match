@@ -1,6 +1,6 @@
 package com.liuyi.springbootinit.service.impl;
 
-import static com.liuyi.springbootinit.constant.UserConstant.USER_LOGIN_STATE;
+import static com.liuyi.springbootinit.constant.UserConstant.LOGIN_USER_STATUS;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -16,12 +16,13 @@ import com.liuyi.springbootinit.model.vo.LoginUserVO;
 import com.liuyi.springbootinit.model.vo.UserVO;
 import com.liuyi.springbootinit.service.UserService;
 import com.liuyi.springbootinit.utils.SqlUtils;
+
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import me.chanjar.weixin.common.bean.WxOAuth2UserInfo;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -78,64 +79,75 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public LoginUserVO userLogin(String userAccount, String userPassword, HttpServletRequest request) {
-        // 1. 校验
+    public User userLogin(String userAccount, String userPassword, HttpServletRequest request) {
+        // 1. 非空
         if (StringUtils.isAnyBlank(userAccount, userPassword)) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "输入不能为空");
         }
+        // 2. 账户长度不小于4位
         if (userAccount.length() < 4) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号错误");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号不能小于4位");
         }
+        // 2. 账户长度不大于16位
+        if (userAccount.length() > 16) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号不能大于16位");
+        }
+        // 3. 密码就不小于8位吧
         if (userPassword.length() < 8) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码错误");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码小于8位 ");
         }
-        // 2. 加密
-        String encryptPassword = DigestUtils.md5DigestAsHex((SALT + userPassword).getBytes());
-        // 查询用户是否存在
-        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("userAccount", userAccount);
-        queryWrapper.eq("userPassword", encryptPassword);
-        User user = this.baseMapper.selectOne(queryWrapper);
+        //  5. 账户不包含特殊字符
+        String pattern = "[0-9a-zA-Z]+";
+        if (!userAccount.matches(pattern)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号不能包含特殊字符");
+        }
+
+        String encryptPassword = DigestUtils.md5DigestAsHex((SALT + userPassword).getBytes(StandardCharsets.UTF_8));
+        QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
+        userQueryWrapper.eq("userAccount", userAccount);
+        userQueryWrapper.eq("userPassword", encryptPassword);
+        User user = this.getOne(userQueryWrapper);
+
         // 用户不存在
         if (user == null) {
-            log.info("user login failed, userAccount cannot match userPassword");
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户不存在或密码错误");
+            log.info("user login failed,userAccount cannot match userPassword");
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户名或密码错误 ");
         }
-        // 3. 记录用户的登录态
-        request.getSession().setAttribute(USER_LOGIN_STATE, user);
-        return this.getLoginUserVO(user);
+
+        // 用户脱敏
+        User safeUser = getSafetyUser(user);
+        // 记录用户的登录态
+        request.getSession().setAttribute(LOGIN_USER_STATUS, safeUser);
+        return safeUser;
     }
 
+    /**
+     * 用户脱敏
+     *
+     * @param originUser 用户信息
+     * @return 脱敏后的用户信息
+     */
     @Override
-    public LoginUserVO userLoginByMpOpen(WxOAuth2UserInfo wxOAuth2UserInfo, HttpServletRequest request) {
-        String unionId = wxOAuth2UserInfo.getUnionId();
-        String mpOpenId = wxOAuth2UserInfo.getOpenid();
-        // 单机锁
-        synchronized (unionId.intern()) {
-            // 查询用户是否已存在
-            QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-            queryWrapper.eq("unionId", unionId);
-            User user = this.getOne(queryWrapper);
-            // 被封号，禁止登录
-            if (user != null && UserRoleEnum.BAN.getValue().equals(user.getUserRole())) {
-                throw new BusinessException(ErrorCode.FORBIDDEN_ERROR, "该用户已被封，禁止登录");
-            }
-            // 用户不存在则创建
-            if (user == null) {
-                user = new User();
-                user.setUnionId(unionId);
-                user.setMpOpenId(mpOpenId);
-                user.setUserAvatar(wxOAuth2UserInfo.getHeadImgUrl());
-                user.setUserName(wxOAuth2UserInfo.getNickname());
-                boolean result = this.save(user);
-                if (!result) {
-                    throw new BusinessException(ErrorCode.SYSTEM_ERROR, "登录失败");
-                }
-            }
-            // 记录用户的登录态
-            request.getSession().setAttribute(USER_LOGIN_STATE, user);
-            return getLoginUserVO(user);
+    public User getSafetyUser(User originUser) {
+        if (originUser == null) {
+            return null;
         }
+        User safeUser = new User();
+        safeUser.setId(originUser.getId());
+        safeUser.setUsername(originUser.getUsername());
+        safeUser.setUserAccount(originUser.getUserAccount());
+        safeUser.setUserAvatarUrl(originUser.getUserAvatarUrl());
+        safeUser.setGender(originUser.getGender());
+        safeUser.setEmail(originUser.getEmail());
+        safeUser.setContactInfo(originUser.getContactInfo());
+        safeUser.setUserDesc(originUser.getUserDesc());
+        safeUser.setUserStatus(originUser.getUserStatus());
+        safeUser.setUserRole(originUser.getUserRole());
+        safeUser.setUserIds(originUser.getUserIds());
+        safeUser.setTags(originUser.getTags());
+        safeUser.setTeamIds(originUser.getTeamIds());
+        safeUser.setCreateTime(originUser.getCreateTime());
+        return safeUser;
     }
 
     /**
@@ -147,7 +159,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public User getLoginUser(HttpServletRequest request) {
         // 先判断是否已登录
-        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
+        Object userObj = request.getSession().getAttribute(LOGIN_USER_STATUS);
         User currentUser = (User) userObj;
         if (currentUser == null || currentUser.getId() == null) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
@@ -170,7 +182,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public User getLoginUserPermitNull(HttpServletRequest request) {
         // 先判断是否已登录
-        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
+        Object userObj = request.getSession().getAttribute(LOGIN_USER_STATUS);
         User currentUser = (User) userObj;
         if (currentUser == null || currentUser.getId() == null) {
             return null;
@@ -189,7 +201,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public boolean isAdmin(HttpServletRequest request) {
         // 仅管理员可查询
-        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
+        Object userObj = request.getSession().getAttribute(LOGIN_USER_STATUS);
         User user = (User) userObj;
         return isAdmin(user);
     }
@@ -206,11 +218,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     public boolean userLogout(HttpServletRequest request) {
-        if (request.getSession().getAttribute(USER_LOGIN_STATE) == null) {
+        if (request.getSession().getAttribute(LOGIN_USER_STATUS) == null) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "未登录");
         }
         // 移除登录态
-        request.getSession().removeAttribute(USER_LOGIN_STATE);
+        request.getSession().removeAttribute(LOGIN_USER_STATUS);
         return true;
     }
 

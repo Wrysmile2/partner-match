@@ -6,9 +6,9 @@ package com.liuyi.springbootinit.constant;
 public interface UserConstant {
 
     /**
-     * 用户登录态键
+     * 用户登录态键值
      */
-    String USER_LOGIN_STATE = "user_login";
+    String LOGIN_USER_STATUS = "loginUserStatus";
 
     //  region 权限
 

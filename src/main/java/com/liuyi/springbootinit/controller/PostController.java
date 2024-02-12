@@ -2,7 +2,6 @@ package com.liuyi.springbootinit.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.gson.Gson;
-import com.liuyi.springbootinit.constant.UserConstant;
 import com.liuyi.springbootinit.exception.BusinessException;
 import com.liuyi.springbootinit.exception.ThrowUtils;
 import com.liuyi.springbootinit.service.PostService;

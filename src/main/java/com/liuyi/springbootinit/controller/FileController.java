@@ -1,7 +1,6 @@
 package com.liuyi.springbootinit.controller;
 
 import cn.hutool.core.io.FileUtil;
-import com.liuyi.springbootinit.constant.FileConstant;
 import com.liuyi.springbootinit.exception.BusinessException;
 import com.liuyi.springbootinit.manager.CosManager;
 import com.liuyi.springbootinit.service.UserService;
