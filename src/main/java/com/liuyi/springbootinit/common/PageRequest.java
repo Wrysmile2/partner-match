@@ -2,29 +2,21 @@ package com.liuyi.springbootinit.common;
 
 import lombok.Data;
 
+import java.io.Serializable;
+
 /**
  * 分页请求
  */
 @Data
-public class PageRequest {
-
-    /**
-     * 当前页号
-     */
-    private long current = 1;
-
+public class PageRequest implements Serializable {
+    private static final long serialVersionUID = -7310366548235104148L;
     /**
      * 页面大小
      */
-    private long pageSize = 10;
+    private int pageSize = 10;
 
     /**
-     * 排序字段
+     * 当前是第几页
      */
-    private String sortField;
-
-    /**
-     * 排序顺序（默认升序）
-     */
-    private String sortOrder = CommonConstant.SORT_ORDER_ASC;
+    private int pageNum = 1;
 }

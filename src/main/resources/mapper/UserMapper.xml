@@ -6,20 +6,30 @@
 <mapper namespace="com.liuyi.springbootinit.mapper.UserMapper">
     <resultMap id="BaseResultMap" type="com.liuyi.springbootinit.model.entity.User">
         <id property="id" column="id" jdbcType="BIGINT"/>
-        <result property="unionId" column="unionId" jdbcType="VARCHAR"/>
-        <result property="mpOpenId" column="mpOpenId" jdbcType="VARCHAR"/>
-        <result property="userName" column="userName" jdbcType="VARCHAR"/>
-        <result property="userAvatar" column="userAvatar" jdbcType="VARCHAR"/>
-        <result property="userProfile" column="userProfile" jdbcType="VARCHAR"/>
-        <result property="userRole" column="userRole" jdbcType="VARCHAR"/>
+        <result property="username" column="username" jdbcType="VARCHAR"/>
+        <result property="userAccount" column="userAccount" jdbcType="VARCHAR"/>
+        <result property="userAvatarUrl" column="userAvatarUrl" jdbcType="VARCHAR"/>
+        <result property="gender" column="gender" jdbcType="TINYINT"/>
+        <result property="userPassword" column="userPassword" jdbcType="VARCHAR"/>
+        <result property="contactInfo" column="contactInfo" jdbcType="VARCHAR"/>
+        <result property="userDesc" column="userDesc" jdbcType="VARCHAR"/>
+        <result property="email" column="email" jdbcType="VARCHAR"/>
+        <result property="userStatus" column="userStatus" jdbcType="INTEGER"/>
+        <result property="userRole" column="userRole" jdbcType="INTEGER"/>
+        <result property="tags" column="tags" jdbcType="VARCHAR"/>
+        <result property="teamIds" column="teamIds" jdbcType="VARCHAR"/>
+        <result property="userIds" column="userIds" jdbcType="VARCHAR"/>
         <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
         <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
         <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,unionId,mpOpenId,
-        userName,userAvatar,userProfile,
-        userRole,createTime,updateTime,isDelete
+        id,username,userAccount,
+        userAvatarUrl,gender,userPassword,
+        contactInfo,userDesc,userStatus,
+        userRole,tags,teamIds,
+        userIds,createTime,updateTime,
+        isDelete,email
     </sql>
 </mapper>
