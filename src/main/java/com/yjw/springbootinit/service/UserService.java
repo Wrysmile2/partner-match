@@ -114,4 +114,15 @@ public interface UserService extends IService<User> {
      */
     QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest);
 
+    /**
+     * 用户注册
+     *
+     * @param username      用户名
+     * @param userAccount   用户账号
+     * @param userPassword  用户密码
+     * @param checkPassword 确认密码
+     * @return 新注册用户的id
+     */
+    long userRegistration(String username, String userAccount, String userPassword, String checkPassword);
+
 }

@@ -278,4 +278,68 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 sortField);
         return queryWrapper;
     }
+
+    /**
+     * 用户账号注册
+     *
+     * @param userAccount   用户账号
+     * @param userPassword  用户密码
+     * @param checkPassword 校验密码
+     * @return 成功的条数
+     */
+    @Override
+    public long userRegistration(String username, String userAccount, String userPassword, String checkPassword) {
+        // 1. 非空
+        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "输入不能为空");
+        }
+        // 2. 账户长度不小于4位
+        if (userAccount.length() < 4) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号不能小于4位");
+        }
+        if (!StringUtils.isAnyBlank(username) && username.length() > 20) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "昵称不能超过20个字符");
+        }
+        // 2. 账户长度不大于16位
+        if (userAccount.length() > 16) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号不能能大于16位");
+        }
+        // 3. 密码就不小于8位吧
+        if (userPassword.length() < 8 || checkPassword.length() < 8) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码小于8位");
+        }
+        //  5. 账户不包含特殊字符
+        // 匹配由数字、小写字母、大写字母组成的字符串,且字符串的长度至少为1个字符
+        String pattern = "[0-9a-zA-Z]+";
+        if (!userAccount.matches(pattern)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号包含特殊字符");
+        }
+        // 6. 密码和校验密码相同
+        if (!userPassword.equals(checkPassword)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "输入密码不一致");
+        }
+
+        // 4. 账户不能重复
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("userAccount", userAccount);
+        long count = this.count(queryWrapper);
+        if (count > 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号已存在");
+        }
+
+        String encryptPassword = DigestUtils.md5DigestAsHex((SALT + userPassword).getBytes(StandardCharsets.UTF_8));
+        User user = new User();
+        user.setUserAccount(userAccount);
+        user.setUserPassword(encryptPassword);
+        user.setUsername(username);
+        user.setTags("[]");
+        user.setTeamIds("[]");
+        user.setUserIds("[]");
+
+        boolean saveResult = this.save(user);
+        if (!saveResult) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "注册失败 ");
+        }
+        return user.getId();
+    }
 }

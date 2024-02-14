@@ -51,22 +51,23 @@ public class UserController {
     /**
      * 用户注册
      *
-     * @param userRegisterRequest
+     * @param registerRequest
      * @return
      */
     @PostMapping("/register")
-    public BaseResponse<Long> userRegister(@RequestBody UserRegisterRequest userRegisterRequest) {
-        if (userRegisterRequest == null) {
+    public BaseResponse<Long> register(@RequestBody UserRegisterRequest registerRequest) {
+        if (registerRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        String userAccount = userRegisterRequest.getUserAccount();
-        String userPassword = userRegisterRequest.getUserPassword();
-        String checkPassword = userRegisterRequest.getCheckPassword();
+        String username = registerRequest.getUsername();
+        String userAccount = registerRequest.getUserAccount();
+        String userPassword = registerRequest.getUserPassword();
+        String checkPassword = registerRequest.getCheckPassword();
         if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword)) {
-            return null;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        long result = userService.userRegister(userAccount, userPassword, checkPassword);
-        return ResultUtils.success(result);
+        long result = userService.userRegistration(username, userAccount, userPassword, checkPassword);
+        return ResultUtil.success(result, "注册成功");
     }
 
     /**

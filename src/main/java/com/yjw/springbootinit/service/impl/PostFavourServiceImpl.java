@@ -41,7 +41,7 @@ public class PostFavourServiceImpl extends ServiceImpl<PostFavourMapper, PostFav
         // 判断是否存在
         Post post = postService.getById(postId);
         if (post == null) {
-            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+            throw new BusinessException(ErrorCode.NO_AUTH);
         }
         // 是否已帖子收藏
         long userId = loginUser.getId();

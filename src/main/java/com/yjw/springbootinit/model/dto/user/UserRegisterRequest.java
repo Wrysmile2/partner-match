@@ -1,6 +1,7 @@
 package com.yjw.springbootinit.model.dto.user;
 
 import java.io.Serializable;
+
 import lombok.Data;
 
 /**
@@ -9,7 +10,9 @@ import lombok.Data;
 @Data
 public class UserRegisterRequest implements Serializable {
 
-    private static final long serialVersionUID = 3191241716373120793L;
+    private static final long serialVersionUID = -921225522179459481L;
+
+    private String username;
 
     private String userAccount;
 
