@@ -1,6 +1,7 @@
 package com.yjw.springbootinit.controller;
 
 import cn.hutool.core.io.FileUtil;
+import com.yjw.springbootinit.constant.FileConstant;
 import com.yjw.springbootinit.exception.BusinessException;
 import com.yjw.springbootinit.manager.CosManager;
 import com.yjw.springbootinit.service.UserService;
@@ -14,6 +15,7 @@ import com.yjw.springbootinit.model.enums.FileUploadBizEnum;
 import java.io.File;
 import java.util.Arrays;
 import javax.annotation.Resource;
+import javax.jnlp.FileContents;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;

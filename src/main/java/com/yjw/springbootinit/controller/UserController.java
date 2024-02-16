@@ -67,7 +67,7 @@ public class UserController {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         long result = userService.userRegistration(username, userAccount, userPassword, checkPassword);
-        return ResultUtil.success(result, "注册成功");
+        return ResultUtils.success(result, "注册成功");
     }
 
     /**
@@ -152,7 +152,7 @@ public class UserController {
         User user = new User();
         BeanUtils.copyProperties(userUpdateRequest, user);
         boolean result = userService.updateById(user);
-        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        ThrowUtils.throwIf(!result, ErrorCode.NO_AUTH);
         return ResultUtils.success(true);
     }
 
